@@ -173,10 +173,9 @@ class Note extends FlxSprite
 
 	public function defaultRGB()
 	{
-		var arr:Array<FlxColor> = ClientPrefs.data.arrowRGB[noteData];
-		if(PlayState.isPixelStage) arr = ClientPrefs.data.arrowRGBPixel[noteData];
+		var arr:Array<FlxColor> = Accessibility.getNoteColor(noteData, PlayState.isPixelStage);
 
-		if (arr != null && noteData > -1 && noteData <= arr.length)
+		if (arr != null)
 		{
 			rgbShader.r = arr[0];
 			rgbShader.g = arr[1];
@@ -331,9 +330,9 @@ class Note extends FlxSprite
 		if(globalRgbShaders[noteData] == null)
 		{
 			var newRGB:RGBPalette = new RGBPalette();
-			var arr:Array<FlxColor> = (!PlayState.isPixelStage) ? ClientPrefs.data.arrowRGB[noteData] : ClientPrefs.data.arrowRGBPixel[noteData];
+			var arr:Array<FlxColor> = Accessibility.getNoteColor(noteData, PlayState.isPixelStage);
 			
-			if (arr != null && noteData > -1 && noteData <= arr.length)
+			if (arr != null)
 			{
 				newRGB.r = arr[0];
 				newRGB.g = arr[1];
@@ -349,6 +348,36 @@ class Note extends FlxSprite
 			globalRgbShaders[noteData] = newRGB;
 		}
 		return globalRgbShaders[noteData];
+	}
+
+	/** Drops the cached lane shaders so a palette change is picked up on the next note. */
+	public static function clearGlobalRGBShaders():Void
+	{
+		for (i in 0...globalRgbShaders.length)
+			globalRgbShaders[i] = null;
+	}
+
+	/**
+	 * Re-applies the current palette to the cached lane shaders in place.
+	 *
+	 * Every note and strum already on screen shares these palettes, so writing the
+	 * new colors here recolors the live song instead of waiting for a restart.
+	 * Notes that cloned the palette for a custom note type keep their own colors.
+	 */
+	public static function refreshGlobalRGBShaders():Void
+	{
+		for (lane in 0...globalRgbShaders.length)
+		{
+			var palette:RGBPalette = globalRgbShaders[lane];
+			if (palette == null) continue;
+
+			var arr:Array<FlxColor> = Accessibility.getNoteColor(lane, PlayState.isPixelStage);
+			if (arr == null) continue;
+
+			palette.r = arr[0];
+			palette.g = arr[1];
+			palette.b = arr[2];
+		}
 	}
 
 	var _lastNoteOffX:Float = 0;

@@ -1,5 +1,6 @@
 package psychlua;
 
+import backend.FileAccess;
 import Type.ValueType;
 import haxe.Constraints;
 
@@ -32,6 +33,13 @@ class ReflectionFunctions
 			return value;
 		});
 		Lua_helper.add_callback(lua, "getPropertyFromClass", function(classVar:String, variable:String, ?allowMaps:Bool = false) {
+			var blocked:String = FileAccess.hscriptClassAllowed(classVar);
+			if (blocked != null)
+			{
+				FunkinLua.luaTrace('getPropertyFromClass: ' + blocked, false, false, FlxColor.RED);
+				return null;
+			}
+
 			var myClass:Dynamic = Type.resolveClass(classVar);
 			if(myClass == null)
 			{
@@ -50,6 +58,13 @@ class ReflectionFunctions
 			return LuaUtils.getVarInArray(myClass, variable, allowMaps);
 		});
 		Lua_helper.add_callback(lua, "setPropertyFromClass", function(classVar:String, variable:String, value:Dynamic, ?allowMaps:Bool = false, ?allowInstances:Bool = false) {
+			var blocked:String = FileAccess.hscriptClassAllowed(classVar);
+			if (blocked != null)
+			{
+				FunkinLua.luaTrace('setPropertyFromClass: ' + blocked, false, false, FlxColor.RED);
+				return null;
+			}
+
 			var myClass:Dynamic = Type.resolveClass(classVar);
 			if(myClass == null)
 			{
@@ -213,10 +228,24 @@ class ReflectionFunctions
 			return Reflect.callMethod(null, parent, parseInstances(args));
 		});
 		Lua_helper.add_callback(lua, "callMethodFromClass", function(className:String, funcToRun:String, ?args:Array<Dynamic>) {
+			var blocked:String = FileAccess.hscriptClassAllowed(className);
+			if (blocked != null)
+			{
+				FunkinLua.luaTrace('callMethodFromClass: ' + blocked, false, false, FlxColor.RED);
+				return null;
+			}
+
 			return callMethodFromObject(Type.resolveClass(className), funcToRun, parseInstances(args));
 		});
 
 		Lua_helper.add_callback(lua, "createInstance", function(variableToSave:String, className:String, ?args:Array<Dynamic>) {
+			var blocked:String = FileAccess.hscriptClassAllowed(className);
+			if (blocked != null)
+			{
+				FunkinLua.luaTrace('createInstance: ' + blocked, false, false, FlxColor.RED);
+				return false;
+			}
+
 			if (!Std.isOfType(args, Array)) args = [];
 			variableToSave = variableToSave.trim().replace('.', '');
 			if(MusicBeatState.getVariables().get(variableToSave) == null)

@@ -835,7 +835,7 @@ class FunkinLua {
 		Lua_helper.add_callback(lua, "getCameraFollowY", () -> game.camFollow.y);
 
 		Lua_helper.add_callback(lua, "cameraShake", function(camera:String, intensity:Float, duration:Float) {
-			LuaUtils.cameraFromString(camera).shake(intensity, duration);
+			Accessibility.shake(LuaUtils.cameraFromString(camera), intensity, duration);
 		});
 
 		Lua_helper.add_callback(lua, "cameraFlash", function(camera:String, color:String, duration:Float,forced:Bool) {

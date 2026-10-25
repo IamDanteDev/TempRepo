@@ -1,5 +1,6 @@
 package psychlua;
 
+import backend.FileAccess;
 import flixel.FlxBasic;
 import objects.Character;
 import psychlua.LuaUtils;
@@ -45,6 +46,15 @@ class HScript extends Iris
 
 	public static function initHaxeModuleCode(parent:FunkinLua, code:String, ?varsToBring:Any = null)
 	{
+		// Safe Mode: refuse code that reaches for the filesystem before it is parsed.
+		var blocked:String = FileAccess.hscriptSourceAllowed(code);
+		if (blocked != null)
+		{
+			var blockedPos:HScriptInfos = cast {fileName: parent.scriptName, isLua: true};
+			Iris.error('[$parent.scriptName] $blocked', blockedPos);
+			return;
+		}
+
 		var hs:HScript = try parent.hscript catch (e) null;
 		if(hs == null)
 		{
@@ -111,6 +121,17 @@ class HScript extends Iris
 		if (scriptName == null && parent != null)
 			scriptName = parent.scriptName;
 		#end
+		// Safe Mode: a script loaded from disk is refused before Iris parses it.
+		var blocked:String = FileAccess.hscriptSourceAllowed(scriptThing);
+		if (blocked != null)
+		{
+			var blockedName:String = (scriptName != null && scriptName.length > 0) ? scriptName : 'script';
+			FlxG.log.warn('[$blockedName] $blocked');
+			Iris.error('[$blockedName] $blocked', cast {fileName: blockedName});
+			scriptThing = '';
+			manualRun = true;
+		}
+
 		super(scriptThing, new IrisConfig(scriptName, false, false));
 		var customInterp:CustomInterp = new CustomInterp();
 		customInterp.parentInstance = FlxG.state;
@@ -319,6 +340,13 @@ class HScript extends Iris
 
 		set('addHaxeLibrary', function(libName:String, ?libPackage:String = '') {
 			try {
+				var blocked:String = FileAccess.hscriptClassAllowed(libName, libPackage);
+				if (blocked != null)
+				{
+					Iris.error(blocked, this.interp.posInfos());
+					return;
+				}
+
 				var str:String = '';
 				if(libPackage.length > 0)
 					str = libPackage + '.';
@@ -352,6 +380,13 @@ class HScript extends Iris
 	#if LUA_ALLOWED
 	public static function implement(funk:FunkinLua) {
 		funk.addLocalCallback("runHaxeCode", function(codeToRun:String, ?varsToBring:Any = null, ?funcToRun:String = null, ?funcArgs:Array<Dynamic> = null):Dynamic {
+			var blocked:String = FileAccess.hscriptSourceAllowed(codeToRun);
+			if (blocked != null)
+			{
+				Iris.error(blocked, cast {fileName: funk.scriptName, isLua: true});
+				return null;
+			}
+
 			initHaxeModuleCode(funk, codeToRun, varsToBring);
 			if (funk.hscript != null)
 			{
@@ -387,6 +422,13 @@ class HScript extends Iris
 		});
 		// This function is unnecessary because import already exists in HScript as a native feature
 		funk.addLocalCallback("addHaxeLibrary", function(libName:String, ?libPackage:String = '') {
+			var blocked:String = FileAccess.hscriptClassAllowed(libName, libPackage);
+			if (blocked != null)
+			{
+				Iris.error(blocked, cast {fileName: funk.scriptName, isLua: true});
+				return;
+			}
+
 			var str:String = '';
 			if (libPackage.length > 0)
 				str = libPackage + '.';

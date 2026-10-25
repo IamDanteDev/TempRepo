@@ -13,6 +13,17 @@ import states.TitleState;
 	public var opponentStrums:Bool = true;
 	public var showFPS:Bool = true;
 	public var flashing:Bool = true;
+	public var colorblindMode:String = 'Off';
+	public var reduceMotion:Bool = false;
+	public var textScale:Float = 1;
+	// Script file access. Safe Mode restricts writes/deletes to the mods folder and
+	// allows reads from the game folder too. With it off, the per type switches decide.
+	public var safeMode:Bool = true;
+	public var fileAccessData:Bool = true;
+	public var fileAccessScripts:Bool = true;
+	public var fileAccessImages:Bool = true;
+	public var fileAccessAudio:Bool = true;
+	public var fileAccessOther:Bool = true;
 	public var autoPause:Bool = true;
 	public var antialiasing:Bool = true;
 	public var noteSkin:String = 'Default';

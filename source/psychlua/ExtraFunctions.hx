@@ -1,5 +1,6 @@
 package psychlua;
 
+import backend.FileAccess;
 import flixel.util.FlxSave;
 import openfl.utils.Assets;
 
@@ -150,9 +151,10 @@ class ExtraFunctions
 		// File management
 		Lua_helper.add_callback(lua, "checkFileExists", function(filename:String, ?absolute:Bool = false) {
 			#if MODS_ALLOWED
-			if(absolute) return FileSystem.exists(filename);
+			var resolved:String = absolute ? filename : Paths.getPath(filename, TEXT);
+			if(!FileAccess.check(FileAccess.OP_READ, resolved, funk.scriptName)) return false;
 
-			return FileSystem.exists(Paths.getPath(filename, TEXT));
+			return FileSystem.exists(resolved);
 
 			#else
 			if(absolute) return Assets.exists(filename, TEXT);
@@ -164,11 +166,14 @@ class ExtraFunctions
 		{
 			try {
 				#if MODS_ALLOWED
-				if(!absolute)
-					File.saveContent(Paths.mods(path), content);
-				else
+				var resolved:String = absolute ? path : Paths.mods(path);
+				if(!FileAccess.check(FileAccess.OP_WRITE, resolved, funk.scriptName)) return false;
+
+				File.saveContent(resolved, content);
+
+				#else
+				File.saveContent(path, content);
 				#end
-					File.saveContent(path, content);
 
 				return true;
 			} catch (e:Dynamic) {
@@ -181,6 +186,8 @@ class ExtraFunctions
 			try {
 				var lePath:String = path;
 				if(!absolute) lePath = Paths.getPath(path, TEXT, !ignoreModFolders);
+				if(!FileAccess.check(FileAccess.OP_DELETE, lePath, funk.scriptName)) return false;
+
 				if(FileSystem.exists(lePath))
 				{
 					FileSystem.deleteFile(lePath);
@@ -192,12 +199,15 @@ class ExtraFunctions
 			return false;
 		});
 		Lua_helper.add_callback(lua, "getTextFromFile", function(path:String, ?ignoreModFolders:Bool = false) {
+			var resolved:String = Paths.getPath(path, TEXT, !ignoreModFolders);
+			if(!FileAccess.check(FileAccess.OP_READ, resolved, funk.scriptName)) return null;
+
 			return Paths.getTextFromFile(path, ignoreModFolders);
 		});
 		Lua_helper.add_callback(lua, "directoryFileList", function(folder:String) {
 			var list:Array<String> = [];
 			#if sys
-			if(FileSystem.exists(folder)) {
+			if(FileAccess.check(FileAccess.OP_LIST, folder, funk.scriptName) && FileSystem.exists(folder)) {
 				for (folder in FileSystem.readDirectory(folder)) {
 					if (!list.contains(folder)) {
 						list.push(folder);

@@ -12,6 +12,8 @@ class OptionsState extends MusicBeatState
 		'Adjust Delay and Combo',
 		'Graphics',
 		'Visuals',
+		'Accessibility',
+		'File Access',
 		'Gameplay',
 		'Customization'
 		#if TRANSLATIONS_ALLOWED , 'Language' #end
@@ -35,6 +37,10 @@ class OptionsState extends MusicBeatState
 				openSubState(new options.GraphicsSettingsSubState());
 			case 'Visuals':
 				openSubState(new options.VisualsSettingsSubState());
+			case 'Accessibility':
+				openSubState(new options.AccessibilitySubState());
+			case 'File Access':
+				openSubState(new options.FileAccessSubState());
 			case 'Gameplay':
 				openSubState(new options.GameplaySettingsSubState());
 			case 'Adjust Delay and Combo':
@@ -79,7 +85,11 @@ class OptionsState extends MusicBeatState
 		{
 			var optionText:Alphabet = new Alphabet(0, 0, Language.getPhrase('options_$option', option), true);
 			optionText.screenCenter();
-			optionText.y += (92 * (num - (options.length / 2))) + 45;
+			// scroll like the main menu: the selected item stays centered, the rest slide
+			optionText.isMenuItem = true;
+			optionText.distancePerItem.set(0, 60);
+			optionText.targetY = num;
+			optionText.startPosition.set(optionText.x, optionText.y);
 			grpOptions.add(optionText);
 		}
 
@@ -133,6 +143,16 @@ class OptionsState extends MusicBeatState
 	override function update(elapsed:Float) {
 		super.update(elapsed);
 
+		// arrows follow the selected entry while the list slides
+		var selected:Alphabet = grpOptions.members[curSelected];
+		if (selected != null)
+		{
+			selectorLeft.x = selected.x - 63;
+			selectorLeft.y = selected.y;
+			selectorRight.x = selected.x + selected.width + 15;
+			selectorRight.y = selected.y;
+		}
+
 		if (controls.UI_UP_P)
 			changeSelection(-1);
 		if (controls.UI_DOWN_P)
@@ -160,14 +180,7 @@ class OptionsState extends MusicBeatState
 		{
 			item.targetY = num - curSelected;
 			item.alpha = 0.6;
-			if (item.targetY == 0)
-			{
-				item.alpha = 1;
-				selectorLeft.x = item.x - 63;
-				selectorLeft.y = item.y;
-				selectorRight.x = item.x + item.width + 15;
-				selectorRight.y = item.y;
-			}
+			if (item.targetY == 0) item.alpha = 1;
 		}
 		FlxG.sound.play(Paths.sound('scrollMenu'));
 	}

@@ -22,7 +22,8 @@ class MasterEditorMenu extends MusicBeatState
 		'Dialogue Portrait Editor',
 		'Note Splash Editor',
 		'ModChart Editor',
-		'Menu Hub Editor'
+		'Menu Hub Editor',
+		'Achievement Editor'
 	];
 	private var grpTexts:FlxTypedGroup<Alphabet>;
 	private var directories:Array<String> = [null];
@@ -130,6 +131,8 @@ class MasterEditorMenu extends MusicBeatState
 					MusicBeatState.switchState(new ModChartEditorState());
 				case 'Menu Hub Editor':
 					MusicBeatState.switchState(new MenuHubEditorState());
+				case 'Achievement Editor':
+					MusicBeatState.switchState(new AchievementEditorState());
 			}
 			FlxG.sound.music.volume = 0;
 			FreeplayState.destroyFreeplayVocals();

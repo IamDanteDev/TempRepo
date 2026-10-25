@@ -220,7 +220,7 @@ class PicoBlazinHandler
 	function playBlockAnim()
 	{
 		boyfriend.playAnim('block', true);
-		FlxG.camera.shake(0.002, 0.1);
+		Accessibility.shake(FlxG.camera, 0.002, 0.1);
 		moveToBack();
 	}
 
@@ -257,35 +257,35 @@ class PicoBlazinHandler
 	function playUppercutAnim(hit:Bool)
 	{
 		boyfriend.playAnim('uppercut', true);
-		if (hit) FlxG.camera.shake(0.005, 0.25);
+		if (hit) Accessibility.shake(FlxG.camera, 0.005, 0.25);
 		moveToFront();
 	}
 
 	function playUppercutHitAnim()
 	{
 		boyfriend.playAnim('uppercutHit', true);
-		FlxG.camera.shake(0.005, 0.25);
+		Accessibility.shake(FlxG.camera, 0.005, 0.25);
 		moveToBack();
 	}
 
 	function playHitHighAnim()
 	{
 		boyfriend.playAnim('hitHigh', true);
-		FlxG.camera.shake(0.0025, 0.15);
+		Accessibility.shake(FlxG.camera, 0.0025, 0.15);
 		moveToBack();
 	}
 
 	function playHitLowAnim()
 	{
 		boyfriend.playAnim('hitLow', true);
-		FlxG.camera.shake(0.0025, 0.15);
+		Accessibility.shake(FlxG.camera, 0.0025, 0.15);
 		moveToBack();
 	}
 
 	function playHitSpinAnim()
 	{
 		boyfriend.playAnim('hitSpin', true);
-		FlxG.camera.shake(0.0025, 0.15);
+		Accessibility.shake(FlxG.camera, 0.0025, 0.15);
 		moveToBack();
 	}
 

@@ -16,10 +16,12 @@ typedef Achievement =
 	@:optional var hidden:Bool;
 	@:optional var maxScore:Float;
 	@:optional var maxDecimals:Int;
+	@:optional var image:String; // path relative to images/ without extension, defaults to achievements/<save>
 
-	//handled automatically, ignore these two
+	//handled automatically, ignore these
 	@:optional var mod:String;
-	@:optional var ID:Int; 
+	@:optional var ID:Int;
+	@:optional var save:String;
 }
 
 enum abstract AchievementOp(String)
@@ -66,6 +68,8 @@ class Achievements {
 	public static var achievements:Map<String, Achievement> = new Map<String, Achievement>();
 	public static var variables:Map<String, Float> = [];
 	public static var achievementsUnlocked:Array<String> = [];
+	// Save keys of the achievements created with the in-game Achievement Editor.
+	public static var customAchievements:Array<String> = [];
 	private static var _firstLoad:Bool = true;
 
 	public static function get(name:String):Achievement
@@ -92,6 +96,7 @@ class Achievements {
 				}
 			}
 			_firstLoad = false;
+			loadCustomAchievements();
 		}
 	}
 
@@ -200,10 +205,143 @@ class Achievements {
 	static var _originalLength = -1;
 	public static function createAchievement(name:String, data:Achievement, ?mod:String = null)
 	{
+		data.save = name;
 		data.ID = _sortID;
 		data.mod = mod;
 		achievements.set(name, data);
 		_sortID++;
+	}
+
+	// ---------------------------------------------------------------------
+	// Custom achievements (created, modified and removed with the Achievement Editor)
+	// They are stored in the save file, not in a mod JSON, so they can be edited at runtime.
+	// ---------------------------------------------------------------------
+	public static function isCustom(name:String):Bool
+		return customAchievements.contains(name);
+
+	public static function isValidSaveKey(key:String):Bool
+		return key != null && ~/^[A-Za-z0-9_-]+$/.match(key);
+
+	// Turns "images/achievements/foo.png" or "achievements/foo" into "achievements/foo"
+	public static function normalizeImagePath(path:String):String
+	{
+		if(path == null) return null;
+
+		path = path.trim().replace('\\', '/');
+		if(path.endsWith('.png')) path = path.substr(0, path.length - 4);
+		if(path.startsWith('images/')) path = path.substr(7);
+		while(path.startsWith('/'))
+			path = path.substr(1);
+
+		return path.length < 1 ? null : path;
+	}
+
+	// Image path (relative to images/, no extension) used to draw this achievement's icon
+	public static function getImagePath(achieve:Achievement):String
+	{
+		if(achieve == null) return 'achievements/unknown';
+		var custom:String = normalizeImagePath(achieve.image);
+		if(custom != null) return custom;
+		return 'achievements/' + (achieve.save != null ? achieve.save : 'unknown');
+	}
+
+	public static function getCustomList():Array<Achievement>
+	{
+		var list:Array<Achievement> = [];
+		for (key in customAchievements)
+		{
+			var achieve:Achievement = achievements.get(key);
+			if(achieve != null) list.push(achieve);
+		}
+		list.sort(function(a:Achievement, b:Achievement) return a.ID - b.ID);
+		return list;
+	}
+
+	// Returns null on success, or a human readable error message
+	public static function createCustom(save:String, data:Achievement):String
+	{
+		save = save.trim();
+		if(!isValidSaveKey(save)) return 'Invalid save key: use only letters, numbers, "_" and "-".';
+		if(achievements.exists(save) && !isCustom(save)) return 'The save key "$save" is already used by another achievement.';
+
+		var existing:Achievement = achievements.get(save);
+		data.ID = (existing != null && existing.ID != null) ? existing.ID : _getNextID();
+		data.save = save;
+		data.mod = null;
+		data.image = normalizeImagePath(data.image);
+		if(data.ID >= _sortID) _sortID = data.ID + 1;
+
+		achievements.set(save, data);
+		if(!customAchievements.contains(save)) customAchievements.push(save);
+		saveCustomAchievements();
+		return null;
+	}
+
+	public static function removeCustom(save:String):Bool
+	{
+		if(!isCustom(save)) return false;
+
+		achievements.remove(save);
+		customAchievements.remove(save);
+		achievementsUnlocked.remove(save);
+		variables.remove(save);
+		Achievements.save();
+		saveCustomAchievements();
+		return true;
+	}
+
+	static function _getNextID():Int
+	{
+		var next:Int = 0;
+		for (achieve in achievements)
+			if(achieve.ID != null && achieve.ID >= next) next = achieve.ID + 1;
+		return next;
+	}
+
+	public static function saveCustomAchievements():Void
+	{
+		var list:Array<Dynamic> = [];
+		for (save in customAchievements)
+		{
+			var achieve:Achievement = achievements.get(save);
+			if(achieve == null) continue;
+
+			list.push({
+				save: save,
+				name: achieve.name,
+				description: achieve.description,
+				hidden: achieve.hidden == true,
+				maxScore: achieve.maxScore == null ? 0 : achieve.maxScore,
+				maxDecimals: achieve.maxDecimals == null ? 0 : achieve.maxDecimals,
+				image: achieve.image
+			});
+		}
+		FlxG.save.data.customAchievementsData = list;
+		FlxG.save.flush();
+	}
+
+	static function loadCustomAchievements():Void
+	{
+		var saved:Array<Dynamic> = cast FlxG.save.data.customAchievementsData;
+		if(saved == null) return;
+
+		for (data in saved)
+		{
+			if(data == null || data.save == null) continue;
+
+			var save:String = Std.string(data.save).trim();
+			if(!isValidSaveKey(save) || achievements.exists(save)) continue;
+
+			createAchievement(save, {
+				name: data.name != null ? Std.string(data.name) : save,
+				description: data.description != null ? Std.string(data.description) : '',
+				hidden: data.hidden == true,
+				maxScore: data.maxScore,
+				maxDecimals: data.maxDecimals,
+				image: data.image != null ? Std.string(data.image) : null
+			}, null);
+			customAchievements.push(save);
+		}
 	}
 
 	#if MODS_ALLOWED
@@ -216,6 +354,8 @@ class Achievements {
 					achievements.remove(key);
 
 		_sortID = _originalLength-1;
+		for (achieve in achievements)
+			if(achieve.ID != null && achieve.ID >= _sortID) _sortID = achieve.ID + 1;
 
 		var modLoaded:String = Mods.currentModDirectory;
 		Mods.currentModDirectory = null;

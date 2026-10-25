@@ -218,7 +218,7 @@ class DarnellBlazinHandler
 	function playBlockAnim()
 	{
 		dad.playAnim('block', true);
-		PlayState.instance.camGame.shake(0.002, 0.1);
+		Accessibility.shake(PlayState.instance.camGame, 0.002, 0.1);
 		moveToBack();
 	}
 
@@ -281,14 +281,14 @@ class DarnellBlazinHandler
 	function playHitHighAnim()
 	{
 		dad.playAnim('hitHigh', true);
-		PlayState.instance.camGame.shake(0.0025, 0.15);
+		Accessibility.shake(PlayState.instance.camGame, 0.0025, 0.15);
 		moveToBack();
 	}
 
 	function playHitLowAnim()
 	{
 		dad.playAnim('hitLow', true);
-		PlayState.instance.camGame.shake(0.0025, 0.15);
+		Accessibility.shake(PlayState.instance.camGame, 0.0025, 0.15);
 		moveToBack();
 	}
 
@@ -307,7 +307,7 @@ class DarnellBlazinHandler
 	function playSpinAnim()
 	{
 		dad.playAnim('hitSpin', true);
-		PlayState.instance.camGame.shake(0.0025, 0.15);
+		Accessibility.shake(PlayState.instance.camGame, 0.0025, 0.15);
 		moveToBack();
 	}
 	

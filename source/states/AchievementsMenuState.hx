@@ -59,7 +59,7 @@ class AchievementsMenuState extends MusicBeatState
 			if(option.unlocked)
 			{
 				#if MODS_ALLOWED Mods.currentModDirectory = option.mod; #end
-				var image:String = 'achievements/' + option.name;
+				var image:String = option.image;
 				if(Paths.fileExists('images/$image-pixel.png', IMAGE))
 				{
 					graphic = Paths.image('$image-pixel');
@@ -138,7 +138,8 @@ class AchievementsMenuState extends MusicBeatState
 			decProgress: data.maxScore > 0 ? data.maxDecimals : 0,
 			unlocked: unlocked,
 			ID: data.ID,
-			mod: mod
+			mod: mod,
+			image: Achievements.getImagePath(data)
 		};
 	}
 

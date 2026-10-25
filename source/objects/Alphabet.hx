@@ -38,6 +38,10 @@ class Alphabet extends FlxSpriteGroup
 		this.startPosition.y = y;
 		this.bold = bold;
 		this.text = text;
+
+		var accessScale:Float = ClientPrefs.data.textScale;
+		if (accessScale > 0 && accessScale != 1)
+			setScale(accessScale);
 	}
 
 	public function setAlignmentFromString(align:String)

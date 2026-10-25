@@ -10,11 +10,7 @@ import states.MainMenuState;
 class MenuHubEditorState extends MusicBeatState
 {
 	var options:Array<String> = [
-		'Main Menu',
-		'Story Mode',
-		'Freeplay',
-		'Options',
-		'Credits'
+		'Main Menu'
 	];
 	private var grpTexts:FlxTypedGroup<Alphabet>;
 	private var curSelected:Int = 0;
@@ -76,18 +72,6 @@ class MenuHubEditorState extends MusicBeatState
 			{
 				case 'Main Menu':
 					MainMenuEditorState.currentMenu = 'mainmenu';
-					MusicBeatState.switchState(new MainMenuEditorState());
-				case 'Story Mode':
-					MainMenuEditorState.currentMenu = 'storymenu';
-					MusicBeatState.switchState(new MainMenuEditorState());
-				case 'Freeplay':
-					MainMenuEditorState.currentMenu = 'freeplay';
-					MusicBeatState.switchState(new MainMenuEditorState());
-				case 'Options':
-					MainMenuEditorState.currentMenu = 'options';
-					MusicBeatState.switchState(new MainMenuEditorState());
-				case 'Credits':
-					MainMenuEditorState.currentMenu = 'credits';
 					MusicBeatState.switchState(new MainMenuEditorState());
 			}
 		}

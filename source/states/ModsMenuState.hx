@@ -29,6 +29,7 @@ class ModsMenuState extends MusicBeatState
 	//var buttonModFolder:MenuButton;
 	var buttonEnableAll:MenuButton;
 	var buttonDisableAll:MenuButton;
+	var buttonInstall:MenuButton;
 	var buttons:Array<MenuButton> = [];
 	var settingsButton:MenuButton;
 
@@ -160,6 +161,14 @@ class ModsMenuState extends MusicBeatState
 			buttonDisableAll.visible = buttonDisableAll.enabled = false;
 			buttonEnableAll.visible = true;
 
+			var installButton:PsychUIButton = new PsychUIButton(400, 560, 'INSTALL MODS', openBrowser, 260, 60);
+			installButton.normalStyle.bgColor = 0xFF3FA34D;
+			installButton.normalStyle.textColor = FlxColor.WHITE;
+			installButton.hoverStyle.bgColor = 0xFF4CAF50;
+			installButton.text.setFormat(Paths.font('vcr.ttf'), 22, FlxColor.WHITE, CENTER);
+			installButton.text.y = installButton.bg.y + installButton.bg.height / 2 - installButton.text.height / 2;
+			add(installButton);
+
 			var myX = bgList.x + bgList.width + 20;
 			noModsTxt = new FlxText(myX, 0, FlxG.width - myX - 20, Language.getPhrase('no_mods_installed', 'NO MODS INSTALLED\nPRESS BACK TO EXIT OR INSTALL A MOD'), 48);
 			if(FlxG.random.bool(0.1)) noModsTxt.text += '\nBITCH.'; //meanie
@@ -211,6 +220,10 @@ class ModsMenuState extends MusicBeatState
 		var buttonsX = bgButtons.x + 320;
 		var buttonsY = bgButtons.y + 10;
 
+		buttonInstall = new MenuButton(bgButtons.x + 10, buttonsY, 290, 80, Language.getPhrase('install_mods_button', 'INSTALL MODS'), openBrowser);
+		add(buttonInstall);
+		buttons.push(buttonInstall);
+
 		var button = new MenuButton(buttonsX, buttonsY, 80, 80, Paths.image('modsMenuButtons'), function() moveModToPosition(0), 54, 54); //Move to the top
 		button.icon.animation.add('icon', [0]);
 		button.icon.animation.play('icon', true);
@@ -232,7 +245,7 @@ class ModsMenuState extends MusicBeatState
 		if(modsList.all.length < 2)
 		{
 			for (button in buttons)
-				button.enabled = false;
+				if(button != buttonInstall) button.enabled = false;
 		}
 
 		settingsButton = new MenuButton(buttonsX + 300, buttonsY, 80, 80, Paths.image('modsMenuButtons'), function() //Settings
@@ -537,7 +550,9 @@ class ModsMenuState extends MusicBeatState
 		{
 			noModsSine += 180 * elapsed;
 			noModsTxt.alpha = 1 - Math.sin((Math.PI * noModsSine) / 180);
-			
+
+			if(controls.ACCEPT) openBrowser();
+
 			// Keep refreshing mods list every 2 seconds until you add a mod on the folder
 			nextAttempt -= elapsed;
 			if(nextAttempt < 0)
@@ -772,6 +787,15 @@ class ModsMenuState extends MusicBeatState
 		MusicBeatState.switchState(new ModsMenuState(curMod != null ? curMod.folder : null));
 	}
 	
+	function openBrowser()
+	{
+		saveTxt();
+		FlxG.sound.play(Paths.sound('scrollMenu'), 0.6);
+		FlxTransitionableState.skipNextTransIn = true;
+		FlxTransitionableState.skipNextTransOut = true;
+		MusicBeatState.switchState(new ModBrowserState());
+	}
+
 	function saveTxt()
 	{
 		var fileStr:String = '';

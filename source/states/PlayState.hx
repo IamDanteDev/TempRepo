@@ -2178,7 +2178,7 @@ class PlayState extends MusicBeatState
 					if(Math.isNaN(intensity)) intensity = 0;
 
 					if(duration > 0 && intensity != 0) {
-						targetsArray[i].shake(intensity, duration);
+						Accessibility.shake(targetsArray[i], intensity, duration);
 					}
 				}
 
@@ -2298,6 +2298,20 @@ class PlayState extends MusicBeatState
 			case 'Play Sound':
 				if(flValue2 == null) flValue2 = 1;
 				FlxG.sound.play(Paths.sound(value1), flValue2);
+
+			#if ACHIEVEMENTS_ALLOWED
+			case 'Unlock Achievement':
+				if(value1 != null && value1.trim().length > 0)
+				{
+					var achieveName:String = value1.trim();
+					if(Achievements.exists(achieveName)) Achievements.unlock(achieveName);
+					#if (LUA_ALLOWED || HSCRIPT_ALLOWED)
+					else addTextToDebug('Unlock Achievement: unknown achievement "$achieveName"', FlxColor.RED);
+					#else
+					else FlxG.log.warn('Unlock Achievement: unknown achievement "$achieveName"');
+					#end
+				}
+			#end
 		}
 
 		stagesFunc(function(stage:BaseStage) stage.eventCalled(eventName, value1, value2, flValue1, flValue2, strumTime));
